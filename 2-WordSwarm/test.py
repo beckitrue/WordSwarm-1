@@ -14,7 +14,7 @@ while going:
     going = pygame.QUIT not in [e.type for e in pygame.event.get()]
 
     screen.fill((0, 0, 0)) #clear screen
-    for x in xrange(100):
+    for x in range(100):
         texoffset = x
         slicepiece = pygame.Surface((1, 128))
         slicepiece.blit(test_tile, (0,0), (texoffset, 0, 1, 128))

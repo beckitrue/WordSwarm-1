@@ -52,9 +52,11 @@ class wsNGrams:
 			enddate = datetime.datetime.strptime(endDateStr,'%Y%m%d');
 	
 		# Import data from CSV file
-		with open(fName, 'rb') as csvfile:
+		# fName = 'nGramOut20230312113916.csv'
+		with open(fName, 'r') as csvfile:
 			fNgrams = csv.reader(csvfile) # Open CSV file
 			rowN = 0
+
 			for row in fNgrams: # Process each row in CSV file
 			
 				if rowN == 0: # Import dates

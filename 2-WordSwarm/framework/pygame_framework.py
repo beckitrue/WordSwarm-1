@@ -1,69 +1,8 @@
-# -*- coding: utf-8 -*-
-""" pygame_framework.py
-
-	The file establishes the PyGame GUI which is used to render the
-	WordSwarm. Not much should ever need to be changed here.
-	
-	The screen size in px can be changed by changing the following line:
-		self.screen = pygame.display.set_mode((1920,1080))
-		Use caution as this may not scale nicely
-	
-	This file is part of WordSwarm.
-
-    WordSwarm is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    WordSwarm is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-	Copyright 2014 Michael Kane	
-	
-	PyBox2D Framework:
-
-	This software is provided 'as-is', without any express or implied
-	warranty.  In no event will the authors be held liable for any damages
-	arising from the use of this software.
-	Permission is granted to anyone to use this software for any purpose,
-	including commercial applications, and to alter it and redistribute it
-	freely, subject to the following restrictions:
-	1. The origin of this software must not be misrepresented; you must not
-	claim that you wrote the original software. If you use this software
-	in a product, an acknowledgment in the product documentation would be
-	appreciated but is not required.
-	2. Altered source versions must be plainly marked as such, and must not be
-	misrepresented as being the original software.
-	3. This notice may not be removed or altered from any source distribution.	
-	
-	C++ version Copyright (c) 2006-2007 Erin Catto http://www.box2d.org
-	Python version by Ken Lauer / sirkne at gmail dot com
-
-"""
-
-"""
-Global Keys:
-    F1     - toggle menu (can greatly improve fps)
-    Space  - shoot projectile
-    Z/X    - zoom
-    Escape - quit
-
-Other keys can be set by the individual test.
-
-Mouse:
-    Left click  - select/drag body (creates mouse joint)
-    Right click - pan
-    Shift+Left  - drag to create a directed projectile
-    Scroll      - zoom
-
-"""
-
 import pygame
 import framework
 from pygame.locals import *
 from framework import *
+
 
 try:
     from pygame_gui import (fwGUI, gui)
@@ -73,13 +12,7 @@ except:
     GUIEnabled = False
 
 class PygameDraw(b2DrawExtended):
-    """
-    This debug draw class accepts callbacks from Box2D (which specifies what to draw)
-    and handles all of the rendering.
 
-    If you are writing your own game, you likely will not want to use debug drawing.
-    Debug drawing, as its name implies, is for debugging.
-    """
     surface = None
     axisScale = 10.0
     def __init__(self, **kwargs): 
@@ -89,10 +22,10 @@ class PygameDraw(b2DrawExtended):
         self.convertVertices = True
 
     def StartDraw(self):
-        self.zoom=self.test.viewZoom
-        self.center=self.test.viewCenter
-        self.offset=self.test.viewOffset
-        self.screenSize=self.test.screenSize
+        self.zoom = 12
+        self.center=(0,0)
+        self.offset= (-900,550)
+        self.screenSize=None
 
     def EndDraw(self): pass
 
@@ -178,24 +111,6 @@ class PygameDraw(b2DrawExtended):
             pygame.draw.polygon(self.surface, (color/2).bytes+[127], vertices, 0)
             pygame.draw.polygon(self.surface, color.bytes, vertices, 1)
 
-    # the to_screen conversions are done in C with b2DrawExtended, leading to 
-    # an increase in fps.
-    # You can also use the base b2Draw and implement these yourself, as the
-    # b2DrawExtended is implemented:
-    # def to_screen(self, point):
-    #     """
-    #     Convert from world to screen coordinates.
-    #     In the class instance, we store a zoom factor, an offset indicating where
-    #     the view extents start at, and the screen size (in pixels).
-    #     """
-    #     x=(point.x * self.zoom)-self.offset.x
-    #     if self.flipX:
-    #         x = self.screenSize.x - x
-    #     y=(point.y * self.zoom)-self.offset.y
-    #     if self.flipY:
-    #         y = self.screenSize.y-y
-    #     return (x, y)
-
 class PygameFramework(FrameworkBase):
     TEXTLINE_START=30
     def setup_keys(self):
@@ -206,14 +121,15 @@ class PygameFramework(FrameworkBase):
 
     def __reset(self):
         # Screen/rendering-related
-        self._viewZoom          = 10.0
-        self._viewCenter        = None
-        self._viewOffset        = None
+        self._viewZoom          = 10
+        self._viewCenter        = 0
+        self._viewOffset        = 0
         self.screenSize         = None
         self.rMouseDown         = False
         self.textLine           = 30
         self.font               = None
         self.fps                = 0
+
 
         # GUI-related (PGU)
         self.gui_app  =None
@@ -228,17 +144,13 @@ class PygameFramework(FrameworkBase):
 
         self.__reset()
         print('Initializing pygame framework...')
-        # Pygame Initialization
         pygame.init()
         caption= "Python Box2D Testbed - " + self.name
         pygame.display.set_caption(caption)
-
-        # Screen and debug draw
-		#@TODO allow for screen size argument
         self.screen = pygame.display.set_mode((1920,1080))
         self.screenSize = b2Vec2(*self.screen.get_size())
-
-        self.renderer = PygameDraw(surface=self.screen, test=self)
+        #self.renderer = PygameDraw(surface=self.screen, test=self)
+        self.renderer = PygameDraw(surface=self.screen)
         self.world.renderer=self.renderer
         
         try:
@@ -350,7 +262,6 @@ class PygameFramework(FrameworkBase):
         while running:
             running = self.checkEvents()
             self.screen.fill( (0,0,0) )
-
             # Check keys that should be checked every loop (not only on initial keydown)
             self.CheckKeys()
 
@@ -402,13 +313,17 @@ class PygameFramework(FrameworkBase):
         pygame.event.pump()
         self.keys = keys = pygame.key.get_pressed()
         if keys[Keys.K_LEFT]:
+            self.viewCenter -= (0, 0)
             self.viewCenter -= (0.5, 0)
         elif keys[Keys.K_RIGHT]:
+            self.viewCenter += (0, 0)
             self.viewCenter += (0.5, 0)
 
         if keys[Keys.K_UP]:
+            self.viewCenter += (0, 0)
             self.viewCenter += (0, 0.5)
         elif keys[Keys.K_DOWN]:
+            self.viewCenter -= (0, 0)
             self.viewCenter -= (0, 0.5)
 
         if keys[Keys.K_HOME]:
@@ -429,7 +344,7 @@ class PygameFramework(FrameworkBase):
             self.gui_table.updateGUI(self.settings)
 
     def ConvertScreenToWorld(self, x, y):
-        return b2Vec2((x + self.viewOffset.x) / self.viewZoom, 
+        return b2Vec2((x + self.viewOffset.x) / self.viewZoom,
                            ((self.screenSize.y - y + self.viewOffset.y) / self.viewZoom))
 
     def DrawStringAt(self, x, y, str, color=(229,153,153,255)):
@@ -463,4 +378,3 @@ class PygameFramework(FrameworkBase):
         See Keyboard() for key information
         """
         pass
-
